@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Неоновый To-Do</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-purple: #9d00ff;
+            --neon-green: #00ff9d;
+            --dark-bg: #0a0a1a;
+            --darker-bg: #050510;
+            --card-bg: rgba(10, 10, 26, 0.8);
+            --glow-blue: 0 0 20px #00f3ff, 0 0 40px #00f3ff;
+            --glow-pink: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+            --glow-purple: 0 0 20px #9d00ff, 0 0 40px #9d00ff;
+            --glow-green: 0 0 20px #00ff9d, 0 0 40px #00ff9d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background: var(--dark-bg);
+            color: white;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(157, 0, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 243, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 0, 255, 0.1) 0%, transparent 50%);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Анимированный фон */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+            opacity: 0.3;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-1000px) rotate(720deg); }
+        }
+
+        /* Контейнер приложения */
+        .app-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Заголовок - БЕЗ АНИМАЦИИ ПЕЧАТНОЙ МАШИНКИ */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink), var(--neon-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 30px rgba(157, 0, 255, 0.5);
+            animation: titleGlow 3s infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 30px rgba(157, 0, 255, 0.5); }
+            50% { text-shadow: 0 0 50px rgba(0, 243, 255, 0.7); }
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            letter-spacing: 2px;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        /* Панель ввода */
+        .input-card {
+            background: var(--card-bg);
+            border: 2px solid transparent;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(5px);
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .input-card:hover {
+            border-color: var(--neon-purple);
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.3),
+                0 0 30px rgba(157, 0, 255, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .input-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+            animation: scanline 3s infinite linear;
+        }
+
+        @keyframes scanline {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        #taskInput {
+            flex: 1;
+            padding: 20px 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(0, 243, 255, 0.3);
+            border-radius: 15px;
+            font-size: 18px;
+            color: white;
+            font-family: 'Exo 2', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        #taskInput:focus {
+            border-color: var(--neon-blue);
+            box-shadow: var(--glow-blue);
+            background: rgba(0, 243, 255, 0.05);
+        }
+
+        #taskInput::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .add-btn {
+            background: linear-gradient(45deg, var(--neon-purple), var(--neon-pink));
+            border: none;
+            border-radius: 15px;
+            padding: 20px 35px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(157, 0, 255, 0.4);
+        }
+
+        .add-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .add-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .add-btn:hover::before {
+            left: 100%;
+        }
+
+        /* Список задач */
+        .tasks-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(5px);
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .tasks-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tasks-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .tasks-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--neon-purple), var(--neon-blue));
+            border-radius: 10px;
+        }
+
+        .tasks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .tasks-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .tasks-count {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            color: var(--neon-blue);
+        }
+
+        /* Элемент задачи */
+        .task-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            animation: slideIn 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .task-item:hover {
+            transform: translateX(10px);
+            border-color: var(--neon-blue);
+            box-shadow: 0 5px 20px rgba(0, 243, 255, 0.2);
+        }
+
+        .task-item.completed {
+            opacity: 0.7;
+            border-color: var(--neon-green);
+        }
+
+        .task-checkbox {
+            width: 25px;
+            height: 25px;
+            appearance: none;
+            border: 2px solid var(--neon-blue);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .task-checkbox:checked {
+            background: var(--neon-green);
+            border-color: var(--neon-green);
+            box-shadow: var(--glow-green);
+        }
+
+        .task-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-text {
+            font-size: 18px;
+            margin-bottom: 8px;
+            word-break: break-word;
+            transition: all 0.3s ease;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .task-date {
+            font-size: 14px;
+            color: var(--neon-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .task-item:hover .task-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .complete-btn {
+            background: linear-gradient(45deg, var(--neon-green), #00cc7a);
+            color: white;
+        }
+
+        .delete-btn {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.5; }
+        }
+
+        /* Футер */
+        .app-footer {
+            margin-top: 40px;
+            text-align: center;
+            padding: 30px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            border-top: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 20px 30px;
+            border-radius: 15px;
+            color: white;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 600;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            max-width: 400px;
+            transform: translateX(500px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            backdrop-filter: blur(10px);
+            border: 1px solid;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .notification.success {
+            background: rgba(0, 255, 157, 0.15);
+            border-color: var(--neon-green);
+            box-shadow: var(--glow-green);
+        }
+
+        .notification.error {
+            background: rgba(255, 65, 108, 0.15);
+            border-color: #ff416c;
+            box-shadow: 0 0 20px rgba(255, 65, 108, 0.5);
+        }
+
+        .notification.info {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--neon-blue);
+            box-shadow: var(--glow-blue);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            #taskInput {
+                width: 100%;
+            }
+
+            .add-btn {
+                width: 100%;
+                padding: 18px;
+            }
+
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .task-actions {
+                width: 100%;
+                justify-content: center;
+                opacity: 1;
+            }
+
+            .tasks-container {
+                max-height: 60vh;
+            }
+        }
+
+        /* Анимации для частиц */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Эффект неонового свечения для текста */
+        .neon-text {
+            text-shadow:
+                0 0 5px currentColor,
+                0 0 10px currentColor,
+                0 0 20px currentColor,
+                0 0 40px currentColor;
+        }
+    </style>
+</head>
+<body>
+    <!-- Анимированный фон -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Уведомления -->
+    <div class="notification" id="notification">
+        <span class="notification-icon">✨</span>
+        <span class="notification-message">Сообщение</span>
+    </div>
+
+    <!-- Основной контейнер -->
+    <div class="app-container">
+        <!-- Заголовок (БЕЗ АНИМАЦИИ ПЕЧАТНОЙ МАШИНКИ) -->
+        <div class="header">
+            <h1>✨ Неоновый To-Do</h1>
+            <div class="subtitle">Планируй с сиянием будущего</div>
+        </div>
+
+        <!-- Панель ввода -->
+        <div class="input-card">
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="Введите новую задачу...">
+                <button class="add-btn" id="addBtn">
+                    <span style="margin-right: 10px;">⚡</span>Добавить
+                </button>
+            </div>
+        </div>
+
+        <!-- Список задач -->
+        <div class="tasks-container">
+            <div class="tasks-header">
+                <div class="tasks-title neon-text" style="color: var(--neon-green);">Ваши задачи</div>
+                <div class="tasks-count" id="taskCount">0 задач</div>
+            </div>
+
+            <div id="tasksList">
+                <!-- Задачи будут здесь -->
+            </div>
+        </div>
+
+        <!-- Футер -->
+        <div class="app-footer">
+            <p>✨ Каждая выполненная задача — шаг к сияющему будущему ✨</p>
+        </div>
+    </div>
+
+    <script>
+        class TodoApp {
+            constructor() {
+                this.tasks = [];
+                this.notification = document.getElementById('notification');
+                this.taskInput = document.getElementById('taskInput');
+                this.addBtn = document.getElementById('addBtn');
+                this.tasksList = document.getElementById('tasksList');
+                this.taskCount = document.getElementById('taskCount');
+
+                this.init();
+                this.createParticles();
+                this.showWelcomeNotification();
+            }
+
+            init() {
+                this.loadTasks();
+                this.renderTasks();
+
+                // Обработчики событий
+                this.addBtn.addEventListener('click', () => this.addTask());
+                this.taskInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.addTask();
+                });
+
+                // Фокус на поле ввода
+                setTimeout(() => this.taskInput.focus(), 1000);
+            }
+
+            createParticles() {
+                const particlesContainer = document.getElementById('particles');
+                const colors = ['#00f3ff', '#ff00ff', '#9d00ff', '#00ff9d'];
+
+                for (let i = 0; i < 50; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+
+                    // Случайные параметры
+                    const size = Math.random() * 4 + 1;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const left = Math.random() * 100;
+                    const animationDuration = Math.random() * 20 + 10;
+                    const animationDelay = Math.random() * 5;
+
+                    // Применяем стили
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.background = color;
+                    particle.style.left = `${left}%`;
+                    particle.style.animationDuration = `${animationDuration}s`;
+                    particle.style.animationDelay = `${animationDelay}s`;
+                    particle.style.opacity = Math.random() * 0.5 + 0.1;
+
+                    // Анимация мерцания
+                    particle.style.animation = `float ${animationDuration}s infinite linear, twinkle ${Math.random() * 3 + 2}s infinite alternate`;
+
+                    particlesContainer.appendChild(particle);
+                }
+            }
+
+            showWelcomeNotification() {
+                setTimeout(() => {
+                    this.showNotification('✨ Добро пожаловать в Неоновый To-Do!', 'success');
+                }, 1000);
+            }
+
+            addTask() {
+                const text = this.taskInput.value.trim();
+
+                if (text) {
+                    const task = {
+                        id: Date.now(),
+                        text: text,
+                        completed: false,
+                        date: new Date().toLocaleDateString('ru-RU', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }),
+                        createdAt: new Date().toISOString()
+                    };
+
+                    this.tasks.unshift(task);
+                    this.taskInput.value = '';
+                    this.saveTasks();
+                    this.renderTasks();
+                    this.showNotification('🎯 Задача успешно добавлена!', 'success');
+
+                    // Анимация ввода
+                    this.taskInput.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.taskInput.style.transform = 'scale(1)';
+                    }, 300);
+
+                    // Вибро-эффект для кнопки
+                    this.addBtn.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.addBtn.style.transform = 'scale(1)';
+                    }, 150);
+                } else {
+                    this.showNotification('⚠️ Введите текст задачи!', 'error');
+                    this.taskInput.focus();
+                }
+            }
+
+            toggleTask(id) {
+                const taskIndex = this.tasks.findIndex(t => t.id === id);
+                if (taskIndex !== -1) {
+                    this.tasks[taskIndex].completed = !this.tasks[taskIndex].completed;
+                    this.saveTasks();
+                    this.renderTasks();
+
+                    const status = this.tasks[taskIndex].completed ? 'выполнена' : 'возобновлена';
+                    this.showNotification(`✅ Задача ${status}!`, 'info');
+                }
+            }
+
+            deleteTask(id) {
+                const taskIndex = this.tasks.findIndex(t => t.id === id);
+                if (taskIndex !== -1) {
+                    const taskText = this.tasks[taskIndex].text;
+                    this.tasks.splice(taskIndex, 1);
+                    this.saveTasks();
+                    this.renderTasks();
+
+                    this.showNotification(`🗑️ Задача "${taskText.substring(0, 30)}..." удалена`, 'error');
+                }
+            }
+
+            renderTasks() {
+                if (this.tasks.length === 0) {
+                    this.tasksList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">✨</div>
+                            <h3>Список задач пуст</h3>
+                            <p>Добавьте первую задачу и начните сиять!</p>
+                        </div>
+                    `;
+                } else {
+                    this.tasksList.innerHTML = this.tasks.map(task => `
+                        <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+                            <input type="checkbox"
+                                   class="task-checkbox"
+                                   ${task.completed ? 'checked' : ''}
+                                   onclick="todoApp.toggleTask(${task.id})">
+
+                            <div class="task-content">
+                                <div class="task-text ${task.completed ? 'completed' : ''}">
+                                    ${this.escapeHtml(task.text)}
+                                </div>
+                                <div class="task-date">
+                                    <span>📅</span>
+                                    ${task.date}
+                                </div>
+                            </div>
+
+                            <div class="task-actions">
+                                <button class="action-btn complete-btn"
+                                        onclick="todoApp.toggleTask(${task.id})"
+                                        title="${task.completed ? 'Возобновить' : 'Выполнить'}">
+                                    ${task.completed ? '↩' : '✓'}
+                                </button>
+                                <button class="action-btn delete-btn"
+                                        onclick="todoApp.deleteTask(${task.id})"
+                                        title="Удалить">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                this.updateStats();
+            }
+
+            updateStats() {
+                const total = this.tasks.length;
+                const completed = this.tasks.filter(t => t.completed).length;
+                const pending = total - completed;
+
+                this.taskCount.innerHTML = `
+                    <span style="color: var(--neon-blue)">${total}</span> задач ·
+                    <span style="color: var(--neon-green)">${completed}</span> выполнено ·
+                    <span style="color: var(--neon-pink)">${pending}</span> в процессе
+                `;
+
+                // Анимация счетчика
+                this.taskCount.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    this.taskCount.style.transform = 'scale(1)';
+                }, 300);
+            }
+
+            saveTasks() {
+                try {
+                    localStorage.setItem('neonTodoTasks', JSON.stringify(this.tasks));
+                } catch (e) {
+                    this.showNotification('⚠️ Ошибка сохранения данных', 'error');
+                }
+            }
+
+            loadTasks() {
+                try {
+                    const saved = localStorage.getItem('neonTodoTasks');
+                    if (saved) {
+                        this.tasks = JSON.parse(saved);
+                        this.showNotification('📂 Задачи загружены', 'info');
+                    }
+                } catch (e) {
+                    this.showNotification('⚠️ Ошибка загрузки данных', 'error');
+                    this.tasks = [];
+                }
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = this.notification;
+
+                // Устанавливаем сообщение и тип
+                notification.querySelector('.notification-message').textContent = message;
+                notification.className = `notification ${type}`;
+
+                // Показываем уведомление
+                notification.classList.add('show');
+
+                // Скрываем через 5 секунд
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 5000);
+
+                // Звуковой эффект (если браузер поддерживает)
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    oscillator.type = 'sine';
+
+                    if (type === 'success') {
+                        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                    } else if (type === 'error') {
+                        oscillator.frequency.setValueAtTime(392.00, audioContext.currentTime); // G4
+                        oscillator.frequency.setValueAtTime(311.13, audioContext.currentTime + 0.1); // D#4
+                    } else {
+                        oscillator.frequency.setValueAtTime(440.00, audioContext.currentTime); // A4
+                    }
+
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                } catch (e) {
+                    // Аудио не поддерживается - пропускаем
+                }
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // Создаем экземпляр приложения при загрузке страницы
+        let todoApp;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            todoApp = new TodoApp();
+            window.todoApp = todoApp;
+
+            // Добавляем эффект ввода при фокусе
+            const taskInput = document.getElementById('taskInput');
+            taskInput.addEventListener('focus', () => {
+                taskInput.style.boxShadow = 'var(--glow-blue)';
+            });
+
+            taskInput.addEventListener('blur', () => {
+                taskInput.style.boxShadow = 'none';
+            });
+        });
+
+        // Эффект параллакса для фона
+        document.addEventListener('mousemove', (e) => {
+            const particles = document.querySelector('.particles');
+            const x = (e.clientX / window.innerWidth) * 50;
+            const y = (e.clientY / window.innerHeight) * 50;
+            particles.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        // ВЫРЕЗАНО: Анимация печатной машинки для заголовка
+        // Заголовок теперь статичный
+
+        // Добавляем иконку для избранного
+        const icon = document.createElement('link');
+        icon.rel = 'icon';
+        icon.href = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 fill=%22%2300f3ff%22>✨</text><text y=%22.9em%22 font-size=%2290%22 fill=%22%23ff00ff%22 x=%225%22>✨</text></svg>';
+        document.head.appendChild(icon);
+    </script>
+</body>
+</html>
