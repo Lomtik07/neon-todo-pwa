@@ -1029,56 +1029,50 @@
                 
                 if ('serviceWorker' in navigator && 'SyncManager' in window) {
                     navigator.serviceWorker.ready
-                        .then(registration => registration.sync.register('manual-sync'))
-                        .then(() => {
-                            this.syncStatus.textContent = '✅ Синхронизация запущена';
-                            this.syncStatus.style.color = 'var(--neon-green)';
-                        })
-                        .catch(error => {
-                            console.error('Ошибка синхронизации:', error);
-                            this.syncStatus.textContent = '❌ Ошибка синхронизации';
-                            this.syncStatus.style.color = '#ff416c';
-                            this.showNotification('Ошибка синхронизации', 'error');
-                        })
-                        .finally(() => {
-                            setTimeout(() => {
-                                this.syncButton.disabled = false;
-                                this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизировать</span>';
-                                this.syncStatus.textContent = '';
-                            }, 3000);
-                        });
-                } else {
-                    this.syncStatus.textContent = '⚠️ Синхронизация не поддерживается';
-                    this.syncStatus.style.color = '#ffcc00';
-                    this.syncButton.disabled = false;
-                    this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизировать</span>';
-                }
-            }
-
-            handleServiceWorkerMessage(event) {
-                const { type, data } = event.data;
+                        .then(registration => {
+                // Регистрируем синхронизацию
+                return registration.sync.register('manual-sync');
+            })
+            .then(() => {
+                console.log('✅ Синхронизация запланирована');
+                this.syncStatus.textContent = '✅ Синхронизация запущена';
+                this.syncStatus.style.color = 'var(--neon-green)';
+                this.showNotification('Синхронизация началась', 'success');
                 
-                switch (type) {
-                    case 'SYNC_COMPLETE':
-                        // Помечаем задачи как синхронизированные
-                        this.tasks.forEach(task => task.synced = true);
-                        this.saveTasks();
-                        this.renderTasks();
-                        this.showNotification('✅ Данные синхронизированы с сервером', 'success');
-                        break;
-                        
-                    case 'MANUAL_SYNC_COMPLETE':
-                        this.showNotification(`🔄 Синхронизация завершена (${data.taskCount} задач)`, 'info');
-                        this.syncStatus.textContent = '✅ Синхронизация завершена';
-                        this.syncStatus.style.color = 'var(--neon-green)';
-                        break;
-                        
-                    case 'SYNC_ERROR':
-                        this.showNotification(`❌ Ошибка синхронизации: ${data.error}`, 'error');
-                        break;
+                // Через 3 секунды сбрасываем статус
+                setTimeout(() => {
+                    if (this.syncButton) {
+                        this.syncButton.disabled = false;
+                        this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизировать</span>';
+                        this.syncStatus.textContent = '';
+                    }
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('Ошибка синхронизации:', error);
+                this.syncButton.disabled = false;
+                this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизировать</span>';
+                this.syncStatus.textContent = '❌ Ошибка синхронизации';
+                this.syncStatus.style.color = '#ff416c';
+                
+                // Показываем уведомление с конкретной ошибкой
+                let errorMessage = 'Ошибка синхронизации';
+                if (error.message.includes('not supported')) {
+                    errorMessage = 'Синхронизация не поддерживается в этом браузере';
+                } else if (error.message.includes('permission')) {
+                    errorMessage = 'Требуется разрешение на фоновую синхронизацию';
                 }
-            }
-
+                this.showNotification(errorMessage, 'error');
+            });
+    } else {
+        // Fallback для браузеров без поддержки
+        this.syncButton.disabled = false;
+        this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизировать</span>';
+        this.syncStatus.textContent = '⚠️ Синхронизация не поддерживается';
+        this.syncStatus.style.color = '#ffcc00';
+        this.showNotification('Синхронизация не поддерживается в этом браузере', 'info');
+    }
+}
             // ==================== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ====================
             createParticles() {
                 const particlesContainer = document.getElementById('particles');
@@ -1205,3 +1199,4 @@
     </script>
 </body>
 </html>
+
