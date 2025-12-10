@@ -1,0 +1,11 @@
+// В обработчике fetch
+.catch(error => {
+  // Возвращаем красивую офлайн-страницу
+  return caches.match('/offline.html')
+    .then(response => response || 
+      new Response(
+        '<!DOCTYPE html><html><head><title>Офлайн</title><style>body{background:#0a0a1a;color:white;font-family:sans-serif;text-align:center;padding:50px}</style></head><body><h1>✨ Неоновый To-Do</h1><p>Приложение работает в офлайн-режиме</p><p>Задачи сохранены локально</p></body></html>',
+        { headers: { 'Content-Type': 'text/html' } }
+      )
+    );
+});
