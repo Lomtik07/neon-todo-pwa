@@ -465,15 +465,15 @@
             50% { transform: scale(1.1); opacity: 0.5; }
         }
 
-        /* Кнопка синхронизации */
-        .sync-section {
+        /* Кнопка сохранения данных */
+        .backup-section {
             text-align: center;
             margin-top: 25px;
             padding-top: 20px;
             border-top: 1px solid rgba(0, 243, 255, 0.2);
         }
 
-        .sync-btn {
+        .backup-btn {
             background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
             border: none;
             border-radius: 12px;
@@ -486,38 +486,18 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            position: relative;
-            overflow: hidden;
         }
 
-        .sync-btn:hover {
+        .backup-btn:hover {
             transform: translateY(-2px);
             box-shadow: var(--glow-blue);
         }
 
-        .sync-btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
+        .backup-btn:active {
+            transform: translateY(0);
         }
 
-        .sync-btn.syncing::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        #syncStatus {
+        #backupStatus {
             margin-top: 10px;
             font-size: 13px;
             min-height: 20px;
@@ -704,13 +684,13 @@
             </div>
         </div>
 
-        <!-- Кнопка синхронизации -->
-        <div class="sync-section">
-            <button id="syncButton" class="sync-btn">
-                <span class="sync-icon">🔄</span>
-                <span class="sync-text">Синхронизировать</span>
+        <!-- Кнопка сохранения данных -->
+        <div class="backup-section">
+            <button id="backupButton" class="backup-btn">
+                <span class="backup-icon">💾</span>
+                <span class="backup-text">Сохранить данные</span>
             </button>
-            <div id="syncStatus"></div>
+            <div id="backupStatus"></div>
         </div>
 
         <!-- Футер -->
@@ -729,15 +709,14 @@
                 this.addBtn = document.getElementById('addBtn');
                 this.tasksList = document.getElementById('tasksList');
                 this.taskCount = document.getElementById('taskCount');
-                this.syncButton = document.getElementById('syncButton');
-                this.syncStatus = document.getElementById('syncStatus');
+                this.backupButton = document.getElementById('backupButton');
+                this.backupStatus = document.getElementById('backupStatus');
                 this.installButton = document.getElementById('installButton');
                 this.networkStatus = document.getElementById('networkStatus');
                 
                 // PWA переменные
                 this.deferredPrompt = null;
                 this.isOnline = navigator.onLine;
-                this.syncSupported = this.checkSyncSupport();
                 
                 this.init();
             }
@@ -753,10 +732,12 @@
                     if (e.key === 'Enter') this.addTask();
                 });
                 
+                // Кнопка сохранения данных
+                this.backupButton.addEventListener('click', () => this.saveDataBackup());
+                
                 // Настройка PWA
                 this.setupPWA();
                 this.setupNetworkStatus();
-                this.setupSyncButton();
                 this.createParticles();
                 
                 // Фокус на поле ввода
@@ -784,8 +765,7 @@
                             hour: '2-digit',
                             minute: '2-digit'
                         }),
-                        createdAt: new Date().toISOString(),
-                        synced: false
+                        createdAt: new Date().toISOString()
                     };
 
                     this.tasks.unshift(task);
@@ -810,7 +790,6 @@
                 const taskIndex = this.tasks.findIndex(t => t.id === id);
                 if (taskIndex !== -1) {
                     this.tasks[taskIndex].completed = !this.tasks[taskIndex].completed;
-                    this.tasks[taskIndex].synced = false;
                     this.saveTasks();
                     this.renderTasks();
                     
@@ -855,7 +834,6 @@
                                 <div class="task-date">
                                     <span>📅</span>
                                     ${task.date}
-                                    ${!task.synced ? '<span style="color: #ffcc00; margin-left: 5px;">(не синхронизировано)</span>' : ''}
                                 </div>
                             </div>
 
@@ -882,19 +860,18 @@
                 const total = this.tasks.length;
                 const completed = this.tasks.filter(t => t.completed).length;
                 const pending = total - completed;
-                const unsynced = this.tasks.filter(t => !t.synced).length;
 
                 this.taskCount.innerHTML = `
                     <span style="color: var(--neon-blue)">${total}</span> задач ·
                     <span style="color: var(--neon-green)">${completed}</span> выполнено ·
                     <span style="color: var(--neon-pink)">${pending}</span> в процессе
-                    ${unsynced > 0 ? `· <span style="color: #ffcc00">${unsynced}</span> не синхронизировано` : ''}
                 `;
             }
 
             saveTasks() {
                 try {
                     localStorage.setItem('neonTodoTasks', JSON.stringify(this.tasks));
+                    console.log('💾 Данные сохранены:', this.tasks.length, 'задач');
                 } catch (e) {
                     this.showNotification('⚠️ Ошибка сохранения данных', 'error');
                 }
@@ -906,10 +883,51 @@
                     if (saved) {
                         this.tasks = JSON.parse(saved);
                         console.log('📂 Задачи загружены:', this.tasks.length);
+                        this.showNotification(`📂 Загружено ${this.tasks.length} задач`, 'info');
                     }
                 } catch (e) {
                     console.error('Ошибка загрузки данных:', e);
                     this.tasks = [];
+                }
+            }
+
+            // Сохранение резервной копии данных
+            saveDataBackup() {
+                try {
+                    // Создаем JSON файл для скачивания
+                    const dataStr = JSON.stringify(this.tasks, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    
+                    // Создаем ссылку для скачивания
+                    const downloadUrl = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = `neon-todo-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                    
+                    // Скачиваем файл
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(downloadUrl);
+                    
+                    // Показываем статус
+                    this.backupButton.disabled = true;
+                    this.backupButton.innerHTML = '<span class="backup-icon">✅</span><span class="backup-text">Сохранено!</span>';
+                    this.backupStatus.textContent = `Сохранено ${this.tasks.length} задач`;
+                    this.backupStatus.style.color = 'var(--neon-green)';
+                    
+                    this.showNotification('💾 Резервная копия сохранена', 'success');
+                    
+                    // Через 3 секунды возвращаем обычный вид
+                    setTimeout(() => {
+                        this.backupButton.disabled = false;
+                        this.backupButton.innerHTML = '<span class="backup-icon">💾</span><span class="backup-text">Сохранить данные</span>';
+                        this.backupStatus.textContent = '';
+                    }, 3000);
+                    
+                } catch (error) {
+                    console.error('Ошибка сохранения резервной копии:', error);
+                    this.showNotification('❌ Ошибка сохранения резервной копии', 'error');
                 }
             }
 
@@ -919,148 +937,14 @@
                 return div.innerHTML;
             }
 
-            // ==================== СИНХРОНИЗАЦИЯ ====================
-            checkSyncSupport() {
-                const hasServiceWorker = 'serviceWorker' in navigator;
-                const hasSyncManager = 'SyncManager' in window;
-                const supported = hasServiceWorker && hasSyncManager;
-                
-                console.log('Проверка поддержки синхронизации:');
-                console.log('- Service Worker:', hasServiceWorker);
-                console.log('- SyncManager:', hasSyncManager);
-                console.log('- Поддерживается:', supported);
-                
-                return supported;
-            }
-
-            setupSyncButton() {
-                this.syncButton.addEventListener('click', () => {
-                    this.triggerSync();
-                });
-                
-                // Показываем время последней синхронизации
-                const lastSync = localStorage.getItem('lastSync');
-                if (lastSync) {
-                    this.syncStatus.textContent = `Последняя синхронизация: ${lastSync}`;
-                    this.syncStatus.style.color = 'var(--neon-blue)';
-                    setTimeout(() => {
-                        if (this.syncStatus.textContent.includes('Последняя')) {
-                            this.syncStatus.textContent = '';
-                        }
-                    }, 5000);
-                }
-            }
-
-            triggerSync() {
-                if (!this.isOnline) {
-                    this.showNotification('⚠️ Нет подключения к интернету', 'error');
-                    return;
-                }
-                
-                // Начинаем синхронизацию
-                this.startSyncVisualFeedback();
-                
-                if (this.syncSupported) {
-                    this.tryAdvancedSync();
-                } else {
-                    // Fallback: простая имитация синхронизации
-                    this.simpleSync();
-                }
-            }
-
-            startSyncVisualFeedback() {
-                this.syncButton.disabled = true;
-                this.syncButton.classList.add('syncing');
-                this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизация...</span>';
-                this.syncStatus.textContent = 'Синхронизация...';
-                this.syncStatus.style.color = 'var(--neon-blue)';
-            }
-
-            tryAdvancedSync() {
-                console.log('Пробуем расширенную синхронизацию...');
-                
-                navigator.serviceWorker.ready
-                    .then(registration => {
-                        // Пробуем зарегистрировать синхронизацию
-                        return registration.sync.register('sync-tasks');
-                    })
-                    .then(() => {
-                        console.log('✅ Синхронизация запланирована');
-                        this.syncStatus.textContent = '✅ Синхронизация запущена';
-                        this.syncStatus.style.color = 'var(--neon-green)';
-                        
-                        // Через 3 секунды завершаем (если не получили сообщение от SW)
-                        setTimeout(() => {
-                            if (this.syncButton.disabled) {
-                                this.finishSync();
-                            }
-                        }, 3000);
-                    })
-                    .catch(error => {
-                        console.error('Ошибка расширенной синхронизации:', error);
-                        // Fallback на простую синхронизацию
-                        this.simpleSync();
-                    });
-            }
-
-            simpleSync() {
-                console.log('Используем простую синхронизацию...');
-                
-                // Имитируем задержку сети
-                setTimeout(() => {
-                    // Помечаем все задачи как синхронизированные
-                    this.tasks.forEach(task => task.synced = true);
-                    this.saveTasks();
-                    
-                    // Сохраняем время синхронизации
-                    const syncTime = new Date().toLocaleTimeString();
-                    localStorage.setItem('lastSync', syncTime);
-                    
-                    // Завершаем синхронизацию
-                    this.finishSync(syncTime);
-                }, 1500);
-            }
-
-            finishSync(syncTime = null) {
-                if (!syncTime) {
-                    syncTime = new Date().toLocaleTimeString();
-                    localStorage.setItem('lastSync', syncTime);
-                    this.tasks.forEach(task => task.synced = true);
-                    this.saveTasks();
-                }
-                
-                // Обновляем интерфейс
-                this.renderTasks();
-                this.syncButton.disabled = false;
-                this.syncButton.classList.remove('syncing');
-                this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизировать</span>';
-                this.syncStatus.textContent = `✅ Синхронизировано в ${syncTime}`;
-                this.syncStatus.style.color = 'var(--neon-green)';
-                
-                // Показываем уведомление
-                this.showNotification('✅ Задачи синхронизированы', 'success');
-                
-                // Очищаем статус через 5 секунд
-                setTimeout(() => {
-                    if (this.syncStatus) {
-                        this.syncStatus.textContent = '';
-                    }
-                }, 5000);
-            }
-
             // ==================== PWA ФУНКЦИИ ====================
             setupPWA() {
-                // Регистрация Service Worker
+                // Регистрация Service Worker для PWA
                 if ('serviceWorker' in navigator) {
                     window.addEventListener('load', () => {
                         navigator.serviceWorker.register('/service-worker.js')
                             .then(registration => {
                                 console.log('✅ Service Worker зарегистрирован:', registration.scope);
-                                
-                                // Настройка сообщений от Service Worker
-                                navigator.serviceWorker.addEventListener('message', event => {
-                                    this.handleServiceWorkerMessage(event);
-                                });
                             })
                             .catch(error => {
                                 console.error('❌ Ошибка регистрации Service Worker:', error);
@@ -1111,15 +995,6 @@
                 window.addEventListener('online', updateStatus);
                 window.addEventListener('offline', updateStatus);
                 updateStatus();
-            }
-
-            handleServiceWorkerMessage(event) {
-                const { type, data } = event.data;
-                
-                if (type === 'SYNC_COMPLETE') {
-                    console.log('Получено сообщение от Service Worker: синхронизация завершена');
-                    this.finishSync();
-                }
             }
 
             // ==================== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ====================
@@ -1224,17 +1099,6 @@
                 particles.style.transform = `translate(${x}px, ${y}px)`;
             });
         });
-
-        // ==================== ОБРАБОТЧИК СООБЩЕНИЙ ОТ SERVICE WORKER ====================
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', (event) => {
-                console.log('Получено сообщение от Service Worker:', event.data);
-                
-                if (event.data && event.data.type === 'SYNC_DONE' && todoApp) {
-                    todoApp.finishSync();
-                }
-            });
-        }
 
         // Проверка standalone режима
         if (window.matchMedia('(display-mode: standalone)').matches) {
