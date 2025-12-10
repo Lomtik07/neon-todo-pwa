@@ -4,10 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>✨ Неоновый To-Do</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+    
+    <!-- PWA мета-теги -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="msapplication-TileColor" content="#0a0a1a">
+    
+    <!-- Манифест -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Иконки -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
-
         :root {
             --neon-blue: #00f3ff;
             --neon-pink: #ff00ff;
@@ -74,17 +90,17 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Заголовок - БЕЗ АНИМАЦИИ ПЕЧАТНОЙ МАШИНКИ */
+        /* Заголовок */
         .header {
             text-align: center;
             padding: 40px 20px;
             position: relative;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
 
         .header h1 {
             font-family: 'Orbitron', monospace;
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 900;
             letter-spacing: 3px;
             text-transform: uppercase;
@@ -110,13 +126,63 @@
             text-shadow: 0 0 10px var(--neon-blue);
         }
 
+        /* Статус бар */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 243, 255, 0.1);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-item.online {
+            color: var(--neon-green);
+        }
+
+        .status-item.offline {
+            color: #ff416c;
+        }
+
+        .status-item.syncing {
+            color: var(--neon-blue);
+            animation: pulse 1s infinite;
+        }
+
+        #installButton {
+            background: linear-gradient(45deg, var(--neon-purple), var(--neon-pink));
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            color: white;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        #installButton:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--glow-purple);
+        }
+
         /* Панель ввода */
         .input-card {
             background: var(--card-bg);
             border: 2px solid transparent;
             border-radius: 20px;
             padding: 30px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             backdrop-filter: blur(5px);
             box-shadow:
                 0 10px 40px rgba(0, 0, 0, 0.3),
@@ -158,11 +224,11 @@
 
         #taskInput {
             flex: 1;
-            padding: 20px 25px;
+            padding: 18px 22px;
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid rgba(0, 243, 255, 0.3);
             border-radius: 15px;
-            font-size: 18px;
+            font-size: 16px;
             color: white;
             font-family: 'Exo 2', sans-serif;
             transition: all 0.3s ease;
@@ -183,10 +249,10 @@
             background: linear-gradient(45deg, var(--neon-purple), var(--neon-pink));
             border: none;
             border-radius: 15px;
-            padding: 20px 35px;
+            padding: 18px 30px;
             color: white;
             font-family: 'Orbitron', monospace;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             letter-spacing: 1px;
             cursor: pointer;
@@ -205,26 +271,11 @@
             transform: translateY(-1px);
         }
 
-        .add-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: 0.5s;
-        }
-
-        .add-btn:hover::before {
-            left: 100%;
-        }
-
         /* Список задач */
         .tasks-container {
             background: var(--card-bg);
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             backdrop-filter: blur(5px);
             box-shadow:
                 0 10px 40px rgba(0, 0, 0, 0.3),
@@ -253,21 +304,21 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 2px solid rgba(0, 243, 255, 0.2);
         }
 
         .tasks-title {
             font-family: 'Orbitron', monospace;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             color: var(--neon-green);
             text-shadow: 0 0 10px var(--neon-green);
         }
 
         .tasks-count {
             font-family: 'Orbitron', monospace;
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: var(--neon-blue);
         }
 
@@ -275,11 +326,11 @@
         .task-item {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 15px;
+            padding: 20px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
             transition: all 0.3s ease;
             border: 1px solid transparent;
             animation: slideIn 0.5s ease;
@@ -299,7 +350,7 @@
         }
 
         .task-item:hover {
-            transform: translateX(10px);
+            transform: translateX(5px);
             border-color: var(--neon-blue);
             box-shadow: 0 5px 20px rgba(0, 243, 255, 0.2);
         }
@@ -310,8 +361,8 @@
         }
 
         .task-checkbox {
-            width: 25px;
-            height: 25px;
+            width: 22px;
+            height: 22px;
             appearance: none;
             border: 2px solid var(--neon-blue);
             border-radius: 50%;
@@ -335,7 +386,7 @@
             transform: translate(-50%, -50%);
             color: white;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .task-content {
@@ -343,8 +394,8 @@
         }
 
         .task-text {
-            font-size: 18px;
-            margin-bottom: 8px;
+            font-size: 16px;
+            margin-bottom: 5px;
             word-break: break-word;
             transition: all 0.3s ease;
         }
@@ -355,16 +406,16 @@
         }
 
         .task-date {
-            font-size: 14px;
+            font-size: 12px;
             color: var(--neon-blue);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .task-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -374,15 +425,15 @@
         }
 
         .action-btn {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border: none;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
@@ -400,18 +451,18 @@
 
         .action-btn:hover {
             transform: scale(1.1) rotate(10deg);
-            box-shadow: 0 0 20px currentColor;
+            box-shadow: 0 0 15px currentColor;
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 50px 20px;
             color: rgba(255, 255, 255, 0.5);
         }
 
         .empty-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
+            font-size: 60px;
+            margin-bottom: 15px;
             opacity: 0.3;
             animation: pulse 2s infinite;
         }
@@ -421,31 +472,71 @@
             50% { transform: scale(1.1); opacity: 0.5; }
         }
 
+        /* Кнопка синхронизации */
+        .sync-section {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        .sync-btn {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            border: none;
+            border-radius: 12px;
+            padding: 12px 25px;
+            color: white;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sync-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--glow-blue);
+        }
+
+        .sync-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #syncStatus {
+            margin-top: 10px;
+            font-size: 13px;
+            min-height: 20px;
+        }
+
         /* Футер */
         .app-footer {
-            margin-top: 40px;
+            margin-top: 30px;
             text-align: center;
-            padding: 30px;
+            padding: 25px;
             color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
+            font-size: 13px;
             border-top: 1px solid rgba(0, 243, 255, 0.2);
         }
 
         /* Уведомления */
         .notification {
             position: fixed;
-            top: 30px;
-            right: 30px;
-            padding: 20px 30px;
-            border-radius: 15px;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 12px;
             color: white;
             font-family: 'Exo 2', sans-serif;
             font-weight: 600;
             z-index: 1000;
             display: flex;
             align-items: center;
-            gap: 15px;
-            max-width: 400px;
+            gap: 12px;
+            max-width: 350px;
             transform: translateX(500px);
             opacity: 0;
             transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -477,17 +568,23 @@
         }
 
         .notification-icon {
-            font-size: 24px;
+            font-size: 20px;
         }
 
         /* Адаптивность */
         @media (max-width: 768px) {
             .app-container {
-                padding: 10px;
+                padding: 15px;
             }
 
             .header h1 {
-                font-size: 2.5rem;
+                font-size: 2.2rem;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
             }
 
             .input-group {
@@ -496,17 +593,24 @@
 
             #taskInput {
                 width: 100%;
+                padding: 16px;
             }
 
             .add-btn {
                 width: 100%;
-                padding: 18px;
+                padding: 16px;
+            }
+
+            .tasks-container {
+                max-height: 55vh;
+                padding: 20px;
             }
 
             .task-item {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 15px;
+                gap: 12px;
+                padding: 15px;
             }
 
             .task-actions {
@@ -515,24 +619,27 @@
                 opacity: 1;
             }
 
-            .tasks-container {
-                max-height: 60vh;
+            .notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
             }
         }
 
-        /* Анимации для частиц */
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
-
-        /* Эффект неонового свечения для текста */
+        /* Эффект неонового свечения */
         .neon-text {
             text-shadow:
                 0 0 5px currentColor,
                 0 0 10px currentColor,
                 0 0 20px currentColor,
                 0 0 40px currentColor;
+        }
+
+        /* Анимации для частиц */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
         }
     </style>
 </head>
@@ -548,10 +655,19 @@
 
     <!-- Основной контейнер -->
     <div class="app-container">
-        <!-- Заголовок (БЕЗ АНИМАЦИИ ПЕЧАТНОЙ МАШИНКИ) -->
+        <!-- Заголовок -->
         <div class="header">
             <h1>✨ Неоновый To-Do</h1>
             <div class="subtitle">Планируй с сиянием будущего</div>
+        </div>
+
+        <!-- Статус бар -->
+        <div class="status-bar">
+            <div id="networkStatus" class="status-item online">
+                <span class="status-icon">🌐</span>
+                <span class="status-text">Онлайн</span>
+            </div>
+            <button id="installButton" class="install-btn">📱 Установить</button>
         </div>
 
         <!-- Панель ввода -->
@@ -559,7 +675,7 @@
             <div class="input-group">
                 <input type="text" id="taskInput" placeholder="Введите новую задачу...">
                 <button class="add-btn" id="addBtn">
-                    <span style="margin-right: 10px;">⚡</span>Добавить
+                    <span style="margin-right: 8px;">⚡</span>Добавить
                 </button>
             </div>
         </div>
@@ -576,6 +692,15 @@
             </div>
         </div>
 
+        <!-- Кнопка синхронизации -->
+        <div class="sync-section">
+            <button id="syncButton" class="sync-btn">
+                <span class="sync-icon">🔄</span>
+                <span class="sync-text">Синхронизировать</span>
+            </button>
+            <div id="syncStatus"></div>
+        </div>
+
         <!-- Футер -->
         <div class="app-footer">
             <p>✨ Каждая выполненная задача — шаг к сияющему будущему ✨</p>
@@ -583,6 +708,7 @@
     </div>
 
     <script>
+        // ==================== КЛАСС ПРИЛОЖЕНИЯ ====================
         class TodoApp {
             constructor() {
                 this.tasks = [];
@@ -591,63 +717,45 @@
                 this.addBtn = document.getElementById('addBtn');
                 this.tasksList = document.getElementById('tasksList');
                 this.taskCount = document.getElementById('taskCount');
-
+                this.syncButton = document.getElementById('syncButton');
+                this.syncStatus = document.getElementById('syncStatus');
+                this.installButton = document.getElementById('installButton');
+                this.networkStatus = document.getElementById('networkStatus');
+                
+                // PWA переменные
+                this.deferredPrompt = null;
+                this.isOnline = navigator.onLine;
+                
                 this.init();
-                this.createParticles();
-                this.showWelcomeNotification();
             }
 
             init() {
+                // Загрузка данных
                 this.loadTasks();
                 this.renderTasks();
-
+                
                 // Обработчики событий
                 this.addBtn.addEventListener('click', () => this.addTask());
                 this.taskInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.addTask();
                 });
-
+                
+                // Настройка PWA
+                this.setupPWA();
+                this.setupNetworkStatus();
+                this.setupSyncButton();
+                this.createParticles();
+                
                 // Фокус на поле ввода
-                setTimeout(() => this.taskInput.focus(), 1000);
-            }
-
-            createParticles() {
-                const particlesContainer = document.getElementById('particles');
-                const colors = ['#00f3ff', '#ff00ff', '#9d00ff', '#00ff9d'];
-
-                for (let i = 0; i < 50; i++) {
-                    const particle = document.createElement('div');
-                    particle.className = 'particle';
-
-                    // Случайные параметры
-                    const size = Math.random() * 4 + 1;
-                    const color = colors[Math.floor(Math.random() * colors.length)];
-                    const left = Math.random() * 100;
-                    const animationDuration = Math.random() * 20 + 10;
-                    const animationDelay = Math.random() * 5;
-
-                    // Применяем стили
-                    particle.style.width = `${size}px`;
-                    particle.style.height = `${size}px`;
-                    particle.style.background = color;
-                    particle.style.left = `${left}%`;
-                    particle.style.animationDuration = `${animationDuration}s`;
-                    particle.style.animationDelay = `${animationDelay}s`;
-                    particle.style.opacity = Math.random() * 0.5 + 0.1;
-
-                    // Анимация мерцания
-                    particle.style.animation = `float ${animationDuration}s infinite linear, twinkle ${Math.random() * 3 + 2}s infinite alternate`;
-
-                    particlesContainer.appendChild(particle);
-                }
-            }
-
-            showWelcomeNotification() {
+                setTimeout(() => this.taskInput.focus(), 500);
+                
+                // Показываем приветственное уведомление
                 setTimeout(() => {
                     this.showNotification('✨ Добро пожаловать в Неоновый To-Do!', 'success');
                 }, 1000);
             }
 
+            // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
             addTask() {
                 const text = this.taskInput.value.trim();
 
@@ -663,26 +771,25 @@
                             hour: '2-digit',
                             minute: '2-digit'
                         }),
-                        createdAt: new Date().toISOString()
+                        createdAt: new Date().toISOString(),
+                        synced: false // Флаг для синхронизации
                     };
 
                     this.tasks.unshift(task);
                     this.taskInput.value = '';
                     this.saveTasks();
                     this.renderTasks();
-                    this.showNotification('🎯 Задача успешно добавлена!', 'success');
+                    this.showNotification('🎯 Задача добавлена!', 'success');
+                    
+                    // Планируем синхронизацию
+                    this.scheduleSync();
 
-                    // Анимация ввода
+                    // Анимация
                     this.taskInput.style.transform = 'scale(0.95)';
                     setTimeout(() => {
                         this.taskInput.style.transform = 'scale(1)';
                     }, 300);
 
-                    // Вибро-эффект для кнопки
-                    this.addBtn.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        this.addBtn.style.transform = 'scale(1)';
-                    }, 150);
                 } else {
                     this.showNotification('⚠️ Введите текст задачи!', 'error');
                     this.taskInput.focus();
@@ -693,11 +800,15 @@
                 const taskIndex = this.tasks.findIndex(t => t.id === id);
                 if (taskIndex !== -1) {
                     this.tasks[taskIndex].completed = !this.tasks[taskIndex].completed;
+                    this.tasks[taskIndex].synced = false; // Отмечаем как несинхронизированное
                     this.saveTasks();
                     this.renderTasks();
-
+                    
                     const status = this.tasks[taskIndex].completed ? 'выполнена' : 'возобновлена';
                     this.showNotification(`✅ Задача ${status}!`, 'info');
+                    
+                    // Планируем синхронизацию
+                    this.scheduleSync();
                 }
             }
 
@@ -708,8 +819,11 @@
                     this.tasks.splice(taskIndex, 1);
                     this.saveTasks();
                     this.renderTasks();
-
+                    
                     this.showNotification(`🗑️ Задача "${taskText.substring(0, 30)}..." удалена`, 'error');
+                    
+                    // Планируем синхронизацию
+                    this.scheduleSync();
                 }
             }
 
@@ -737,6 +851,7 @@
                                 <div class="task-date">
                                     <span>📅</span>
                                     ${task.date}
+                                    ${!task.synced ? '<span style="color: #ffcc00; margin-left: 5px;">(не синхронизировано)</span>' : ''}
                                 </div>
                             </div>
 
@@ -763,18 +878,14 @@
                 const total = this.tasks.length;
                 const completed = this.tasks.filter(t => t.completed).length;
                 const pending = total - completed;
+                const unsynced = this.tasks.filter(t => !t.synced).length;
 
                 this.taskCount.innerHTML = `
                     <span style="color: var(--neon-blue)">${total}</span> задач ·
                     <span style="color: var(--neon-green)">${completed}</span> выполнено ·
                     <span style="color: var(--neon-pink)">${pending}</span> в процессе
+                    ${unsynced > 0 ? `· <span style="color: #ffcc00">${unsynced}</span> не синхронизировано` : ''}
                 `;
-
-                // Анимация счетчика
-                this.taskCount.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    this.taskCount.style.transform = 'scale(1)';
-                }, 300);
             }
 
             saveTasks() {
@@ -790,11 +901,208 @@
                     const saved = localStorage.getItem('neonTodoTasks');
                     if (saved) {
                         this.tasks = JSON.parse(saved);
-                        this.showNotification('📂 Задачи загружены', 'info');
+                        console.log('📂 Задачи загружены:', this.tasks.length);
                     }
                 } catch (e) {
-                    this.showNotification('⚠️ Ошибка загрузки данных', 'error');
+                    console.error('Ошибка загрузки данных:', e);
                     this.tasks = [];
+                }
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // ==================== PWA ФУНКЦИИ ====================
+            setupPWA() {
+                // Регистрация Service Worker
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', () => {
+                        navigator.serviceWorker.register('/service-worker.js')
+                            .then(registration => {
+                                console.log('✅ Service Worker зарегистрирован');
+                                
+                                // Настройка сообщений от Service Worker
+                                navigator.serviceWorker.addEventListener('message', event => {
+                                    this.handleServiceWorkerMessage(event);
+                                });
+                                
+                                // Отправляем начальное сообщение
+                                registration.active?.postMessage({
+                                    type: 'APP_LOADED',
+                                    data: { 
+                                        taskCount: this.tasks.length,
+                                        unsynced: this.tasks.filter(t => !t.synced).length
+                                    }
+                                });
+                            })
+                            .catch(error => {
+                                console.error('❌ Ошибка регистрации Service Worker:', error);
+                            });
+                    });
+                }
+                
+                // Установка PWA
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    this.deferredPrompt = e;
+                    this.installButton.style.display = 'block';
+                    
+                    this.installButton.addEventListener('click', () => {
+                        if (!this.deferredPrompt) return;
+                        
+                        this.deferredPrompt.prompt();
+                        
+                        this.deferredPrompt.userChoice.then((choiceResult) => {
+                            console.log(`Пользователь ${choiceResult.outcome} установку`);
+                            this.deferredPrompt = null;
+                            this.installButton.style.display = 'none';
+                        });
+                    });
+                });
+                
+                window.addEventListener('appinstalled', () => {
+                    console.log('🎉 Приложение установлено!');
+                    this.installButton.style.display = 'none';
+                    this.showNotification('✅ Приложение установлено!', 'success');
+                });
+            }
+
+            setupNetworkStatus() {
+                const updateStatus = () => {
+                    this.isOnline = navigator.onLine;
+                    
+                    if (this.isOnline) {
+                        this.networkStatus.className = 'status-item online';
+                        this.networkStatus.innerHTML = '<span class="status-icon">🌐</span><span class="status-text">Онлайн</span>';
+                        
+                        // При восстановлении сети планируем синхронизацию
+                        if (this.hasPendingSync()) {
+                            this.scheduleSync();
+                            this.showNotification('🌐 Соединение восстановлено', 'info');
+                        }
+                    } else {
+                        this.networkStatus.className = 'status-item offline';
+                        this.networkStatus.innerHTML = '<span class="status-icon">📴</span><span class="status-text">Офлайн</span>';
+                        this.showNotification('📴 Работаем в офлайн-режиме', 'info');
+                    }
+                };
+                
+                window.addEventListener('online', updateStatus);
+                window.addEventListener('offline', updateStatus);
+                updateStatus();
+            }
+
+            setupSyncButton() {
+                this.syncButton.addEventListener('click', () => {
+                    this.triggerSync();
+                });
+            }
+
+            hasPendingSync() {
+                return this.tasks.some(task => !task.synced);
+            }
+
+            scheduleSync() {
+                if (this.isOnline && 'serviceWorker' in navigator && 'SyncManager' in window) {
+                    navigator.serviceWorker.ready
+                        .then(registration => registration.sync.register('sync-tasks'))
+                        .then(() => {
+                            console.log('🔄 Синхронизация запланирована');
+                        })
+                        .catch(console.error);
+                }
+            }
+
+            triggerSync() {
+                if (!this.isOnline) {
+                    this.showNotification('⚠️ Нет подключения к интернету', 'error');
+                    return;
+                }
+                
+                this.syncButton.disabled = true;
+                this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизация...</span>';
+                this.syncStatus.textContent = 'Синхронизация...';
+                this.syncStatus.style.color = 'var(--neon-blue)';
+                
+                if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                    navigator.serviceWorker.ready
+                        .then(registration => registration.sync.register('manual-sync'))
+                        .then(() => {
+                            this.syncStatus.textContent = '✅ Синхронизация запущена';
+                            this.syncStatus.style.color = 'var(--neon-green)';
+                        })
+                        .catch(error => {
+                            console.error('Ошибка синхронизации:', error);
+                            this.syncStatus.textContent = '❌ Ошибка синхронизации';
+                            this.syncStatus.style.color = '#ff416c';
+                            this.showNotification('Ошибка синхронизации', 'error');
+                        })
+                        .finally(() => {
+                            setTimeout(() => {
+                                this.syncButton.disabled = false;
+                                this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизировать</span>';
+                                this.syncStatus.textContent = '';
+                            }, 3000);
+                        });
+                } else {
+                    this.syncStatus.textContent = '⚠️ Синхронизация не поддерживается';
+                    this.syncStatus.style.color = '#ffcc00';
+                    this.syncButton.disabled = false;
+                    this.syncButton.innerHTML = '<span class="sync-icon">🔄</span><span class="sync-text">Синхронизировать</span>';
+                }
+            }
+
+            handleServiceWorkerMessage(event) {
+                const { type, data } = event.data;
+                
+                switch (type) {
+                    case 'SYNC_COMPLETE':
+                        // Помечаем задачи как синхронизированные
+                        this.tasks.forEach(task => task.synced = true);
+                        this.saveTasks();
+                        this.renderTasks();
+                        this.showNotification('✅ Данные синхронизированы с сервером', 'success');
+                        break;
+                        
+                    case 'MANUAL_SYNC_COMPLETE':
+                        this.showNotification(`🔄 Синхронизация завершена (${data.taskCount} задач)`, 'info');
+                        this.syncStatus.textContent = '✅ Синхронизация завершена';
+                        this.syncStatus.style.color = 'var(--neon-green)';
+                        break;
+                        
+                    case 'SYNC_ERROR':
+                        this.showNotification(`❌ Ошибка синхронизации: ${data.error}`, 'error');
+                        break;
+                }
+            }
+
+            // ==================== ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ====================
+            createParticles() {
+                const particlesContainer = document.getElementById('particles');
+                const colors = ['#00f3ff', '#ff00ff', '#9d00ff', '#00ff9d'];
+
+                for (let i = 0; i < 40; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+
+                    const size = Math.random() * 3 + 1;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const left = Math.random() * 100;
+                    const animationDuration = Math.random() * 20 + 10;
+                    const animationDelay = Math.random() * 5;
+
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.background = color;
+                    particle.style.left = `${left}%`;
+                    particle.style.animationDuration = `${animationDuration}s`;
+                    particle.style.animationDelay = `${animationDelay}s`;
+                    particle.style.opacity = Math.random() * 0.3 + 0.1;
+
+                    particlesContainer.appendChild(particle);
                 }
             }
 
@@ -808,12 +1116,16 @@
                 // Показываем уведомление
                 notification.classList.add('show');
 
-                // Скрываем через 5 секунд
+                // Скрываем через 4 секунды
                 setTimeout(() => {
                     notification.classList.remove('show');
-                }, 5000);
+                }, 4000);
 
-                // Звуковой эффект (если браузер поддерживает)
+                // Звуковой эффект (опционально)
+                this.playSound(type);
+            }
+
+            playSound(type) {
                 try {
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const oscillator = audioContext.createOscillator();
@@ -821,17 +1133,16 @@
 
                     oscillator.connect(gainNode);
                     gainNode.connect(audioContext.destination);
-
                     oscillator.type = 'sine';
 
                     if (type === 'success') {
-                        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-                        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1);
                     } else if (type === 'error') {
-                        oscillator.frequency.setValueAtTime(392.00, audioContext.currentTime); // G4
-                        oscillator.frequency.setValueAtTime(311.13, audioContext.currentTime + 0.1); // D#4
+                        oscillator.frequency.setValueAtTime(392.00, audioContext.currentTime);
+                        oscillator.frequency.setValueAtTime(311.13, audioContext.currentTime + 0.1);
                     } else {
-                        oscillator.frequency.setValueAtTime(440.00, audioContext.currentTime); // A4
+                        oscillator.frequency.setValueAtTime(440.00, audioContext.currentTime);
                     }
 
                     gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
@@ -840,51 +1151,57 @@
                     oscillator.start();
                     oscillator.stop(audioContext.currentTime + 0.3);
                 } catch (e) {
-                    // Аудио не поддерживается - пропускаем
+                    // Аудио не поддерживается
                 }
-            }
-
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
             }
         }
 
-        // Создаем экземпляр приложения при загрузке страницы
+        // ==================== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ====================
         let todoApp;
 
         document.addEventListener('DOMContentLoaded', () => {
             todoApp = new TodoApp();
             window.todoApp = todoApp;
-
-            // Добавляем эффект ввода при фокусе
+            
+            // Эффект ввода при фокусе
             const taskInput = document.getElementById('taskInput');
             taskInput.addEventListener('focus', () => {
                 taskInput.style.boxShadow = 'var(--glow-blue)';
             });
-
+            
             taskInput.addEventListener('blur', () => {
                 taskInput.style.boxShadow = 'none';
             });
+            
+            // Эффект параллакса для фона
+            document.addEventListener('mousemove', (e) => {
+                const particles = document.querySelector('.particles');
+                const x = (e.clientX / window.innerWidth) * 30;
+                const y = (e.clientY / window.innerHeight) * 30;
+                particles.style.transform = `translate(${x}px, ${y}px)`;
+            });
         });
 
-        // Эффект параллакса для фона
-        document.addEventListener('mousemove', (e) => {
-            const particles = document.querySelector('.particles');
-            const x = (e.clientX / window.innerWidth) * 50;
-            const y = (e.clientY / window.innerHeight) * 50;
-            particles.style.transform = `translate(${x}px, ${y}px)`;
-        });
+        // ==================== PWA РЕГИСТРАЦИЯ ====================
+        if ('serviceWorker' in navigator) {
+            // Регистрируем Service Worker
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js').then(
+                    function(registration) {
+                        console.log('Service Worker зарегистрирован с областью:', registration.scope);
+                    },
+                    function(err) {
+                        console.log('Не удалось зарегистрировать Service Worker:', err);
+                    }
+                );
+            });
+        }
 
-        // ВЫРЕЗАНО: Анимация печатной машинки для заголовка
-        // Заголовок теперь статичный
-
-        // Добавляем иконку для избранного
-        const icon = document.createElement('link');
-        icon.rel = 'icon';
-        icon.href = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 fill=%22%2300f3ff%22>✨</text><text y=%22.9em%22 font-size=%2290%22 fill=%22%23ff00ff%22 x=%225%22>✨</text></svg>';
-        document.head.appendChild(icon);
+        // Проверка standalone режима
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('Приложение запущено в standalone режиме');
+            document.body.classList.add('standalone-mode');
+        }
     </script>
 </body>
 </html>
